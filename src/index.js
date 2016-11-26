@@ -4,8 +4,8 @@ import storageDriver from '@cycle/storage'
 import xs from 'xstream'
 import debounce from 'xstream/extra/debounce'
 
-import Badge from './components/badge'
-import BadgeEditor from './components/badge_editor'
+import CreateForm from './components/create_form'
+import EditForm from './components/edit_form'
 
 function main(sources) {
   const storedUrl$ = sources.storage.local
@@ -14,22 +14,10 @@ function main(sources) {
 
   const url$ = sources.DOM.select('.url').events('input').map(e => e.target.value)
 
-  const badgeEditor = BadgeEditor({
-    DOM: sources.DOM,
-    props$: xs.of({
-      subject: 'Subject',
-      status: 'Status',
-      color: 'red'
-    })
-  })
+  const createForm = CreateForm({DOM: sources.DOM})
+  const editForm = EditForm({DOM: sources.DOM})
 
-  const badge = Badge({
-    props$: badgeEditor.config$.compose(debounce(100))
-  })
-
-
-
-  const vtree$ = xs.combine(storedUrl$, badge.DOM, badgeEditor.DOM).map(([storedUrl, badgeDOM, editorDOM]) => {
+  const vtree$ = xs.combine(storedUrl$, createForm.DOM, editForm.DOM).map(([storedUrl, createFormDOM, editFormDOM]) => {
     return div([
       label('Url:'),
       input('.url', { props: { value: storedUrl}}),
@@ -40,12 +28,10 @@ function main(sources) {
       label('WriteKey:'),
       input('.write-key'),
       hr(),
-      label('Name:'),
-      input('.name'),
-      button('.save', 'Save'),
-      hr(),
-      editorDOM,
-      badgeDOM
+      div([
+        createFormDOM,
+        editFormDOM
+      ])
     ])
   })
 

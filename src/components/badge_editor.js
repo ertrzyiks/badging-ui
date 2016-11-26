@@ -1,4 +1,5 @@
 import {div, input} from '@cycle/dom'
+import isolate from '@cycle/isolate'
 import xs from 'xstream'
 
 function BadgeEditor({DOM, props$}) {
@@ -36,4 +37,6 @@ function BadgeEditor({DOM, props$}) {
   return { DOM: vtree$, config$: config$ }
 }
 
-export default BadgeEditor
+export default function (sources) {
+  return isolate(BadgeEditor)(sources)
+}
