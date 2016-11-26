@@ -19,6 +19,16 @@
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@cycle/isolate/-/isolate-1.4.0.tgz#7cd7908a280e0695467b41c1171b1e37522233df"
 
+"@cycle/storage":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@cycle/storage/-/storage-3.0.0.tgz#f44ea4394e2a89bdbaea46911e6f68fa08adee85"
+  dependencies:
+    "@cycle/xstream-adapter" "^1.0.4"
+
+"@cycle/xstream-adapter@^1.0.4":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@cycle/xstream-adapter/-/xstream-adapter-1.0.5.tgz#4fc7c75c54cff6aa357c6ced7e85648cf445cd1e"
+
 "@cycle/xstream-adapter@3.x.x":
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/@cycle/xstream-adapter/-/xstream-adapter-3.0.4.tgz#54c440b02ef3c8433cdb2d31082c8e5d0dd4d93a"
