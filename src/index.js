@@ -2,22 +2,31 @@ import {run} from '@cycle/xstream-run'
 import {div, label, input, button, hr, h1, makeDOMDriver} from '@cycle/dom'
 import storageDriver from '@cycle/storage'
 import xs from 'xstream'
-import debounce from 'xstream/extra/debounce'
 
-import CreateForm from './components/create_form'
-import EditForm from './components/edit_form'
+import BadgeForm from './components/form'
+import BadgeList from './components/list'
 
 function main(sources) {
   const storedUrl$ = sources.storage.local
     .getItem('url')
     .startWith('')
 
+  const storedBadgeList$ = sources.storage.local
+    .getItem('badges')
+    .startWith([])
+
   const url$ = sources.DOM.select('.url').events('input').map(e => e.target.value)
 
-  const createForm = CreateForm({DOM: sources.DOM})
-  const editForm = EditForm({DOM: sources.DOM})
+  const badgeForm = BadgeForm({DOM: sources.DOM})
 
-  const vtree$ = xs.combine(storedUrl$, createForm.DOM, editForm.DOM).map(([storedUrl, createFormDOM, editFormDOM]) => {
+  const newBadgeList$ = badgeForm.newBadges$.fold((acc, value) => acc.concat(value), [])
+  const badgeList$ = xs.combine(storedBadgeList$, newBadgeList$).map(([storedBadges, newBadges]) => {
+    return storedBadges.concat(newBadges)
+  })
+
+  const badgeList = BadgeList({dataSource$: badgeList$})
+
+  const vtree$ = xs.combine(storedUrl$, badgeList.DOM, badgeForm.DOM).map(([storedUrl, badgeListDOM, badgeFormDOM]) => {
     return div([
       label('Url:'),
       input('.url', { props: { value: storedUrl}}),
@@ -29,16 +38,20 @@ function main(sources) {
       input('.write-key'),
       hr(),
       div([
-        createFormDOM,
-        editFormDOM
+        badgeFormDOM,
+        badgeListDOM
       ])
     ])
   })
 
-  const storageRequests$ = url$.map(url => ({
+  const storageUrlRequests$ = url$.map(url => ({
     key: 'url',
     value: url
   }))
+
+  // const storageBadgeListRequests$ = badges$
+
+  const storageRequests$ = xs.merge(storageUrlRequests$)
 
   const sinks = {
     DOM: vtree$,
