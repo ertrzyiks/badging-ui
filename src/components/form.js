@@ -1,8 +1,9 @@
 import xs from 'xstream'
-import {div, label, input, button, hr} from '@cycle/dom'
+import {div, label, button, hr} from '@cycle/dom'
 
 import Badge from './badge'
 import BadgeEditor from './badge_editor'
+import ControlledInput from './controlled_input'
 import debounce from 'xstream/extra/debounce'
 
 function BadgeForm(sources) {
@@ -24,10 +25,15 @@ function BadgeForm(sources) {
     props$: badgeEditor.config$.compose(debounce(100))
   })
 
-  const vtree$ = xs.combine(badge.DOM, badgeEditor.DOM).map(([badgeDOM, editorDOM]) => {
+  const input = ControlledInput({
+    props: xs.of({className: 'name'}),
+    assign: newBadges$.map(() => '')
+  })
+
+  const vtree$ = xs.combine(badge.DOM, badgeEditor.DOM, input.DOM).map(([badgeDOM, editorDOM, inputDOM]) => {
     return div([
       label('Name:'),
-      input('.name'),
+      inputDOM,
       button('.create', 'Create'),
       hr(),
       editorDOM,
