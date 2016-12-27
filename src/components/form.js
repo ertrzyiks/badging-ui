@@ -6,10 +6,10 @@ import BadgeEditor from './badge_editor'
 import debounce from 'xstream/extra/debounce'
 
 function BadgeForm(sources) {
-  const click$ = sources.DOM.select('.create').events('click').map(null)
-  const type$ = sources.DOM.select('.field').events('input').map(ev => ev.target.value)
+  const click$ = sources.DOM.select('.create').events('click').map(() => null)
+  const type$ = sources.DOM.select('.name').events('input').map(ev => ev.target.value)
 
-  const newBadges$ = type$.map(text => add$.first().map(text)).flatten()
+  const newBadges$ = type$.map(text => click$.take(1).map(() => text)).flatten()
 
   const badgeEditor = BadgeEditor({
     DOM: sources.DOM,

@@ -9,11 +9,15 @@ import BadgeList from './components/list'
 function main(sources) {
   const storedUrl$ = sources.storage.local
     .getItem('url')
+    .take(1)
     .startWith('')
 
   const storedBadgeList$ = sources.storage.local
     .getItem('badges')
-    .startWith([])
+    .take(1)
+    .startWith('')
+    .map(value => value || '[]')
+    .map(value => JSON.parse(value))
 
   const url$ = sources.DOM.select('.url').events('input').map(e => e.target.value)
 
@@ -49,9 +53,12 @@ function main(sources) {
     value: url
   }))
 
-  // const storageBadgeListRequests$ = badges$
+  const storageBadgeListRequests$ = badgeList$.map(list => ({
+    key: 'badges',
+    value: JSON.stringify(list)
+  }))
 
-  const storageRequests$ = xs.merge(storageUrlRequests$)
+  const storageRequests$ = xs.merge(storageUrlRequests$, storageBadgeListRequests$)
 
   const sinks = {
     DOM: vtree$,
