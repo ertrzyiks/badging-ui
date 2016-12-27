@@ -1,10 +1,9 @@
 import {run} from '@cycle/xstream-run'
-import {div, label, input, button, hr, h1, makeDOMDriver} from '@cycle/dom'
+import {makeDOMDriver} from '@cycle/dom'
 import storageDriver from '@cycle/storage'
 import xs from 'xstream'
 
-import BadgeForm from './components/form'
-import BadgeList from './components/list'
+import app from './app'
 
 function main(sources) {
   const storedUrl$ = sources.storage.local
@@ -17,60 +16,18 @@ function main(sources) {
     .map(value => value || '[]')
     .map(value => JSON.parse(value))
 
-  const url$ = sources.DOM.select('.url').events('input').map(e => e.target.value)
-  const removeBadge$ = sources.DOM
-    .select('.remove')
-    .events('click')
-    .map((e) => e.preventDefault() || e)
-    .map((e) => e.target.getAttribute('data-badge'))
-    .map(badge => ({name: 'remove', value: badge}))
-
-  const badgeForm = BadgeForm({DOM: sources.DOM})
-
-  const addBadge$ = badgeForm.newBadges$.map(name => ({name: 'add', value: name}))
-
-  const badgeList$ = storedBadgeList$.map(storedList => {
-    return xs.merge(addBadge$, removeBadge$).startWith({}).fold((acc, action) => {
-      if (action.name === 'add') {
-        return acc.concat(action.value)
-      }
-
-      if (action.name === 'remove') {
-        return acc.filter(value => {
-          return value !== action.value
-        })
-      }
-
-      return acc
-    },storedList)
-  }).flatten()
-
-  const badgeList = BadgeList({dataSource$: badgeList$})
-
-  const vtree$ = xs.combine(storedUrl$, badgeList.DOM, badgeForm.DOM).map(([storedUrl, badgeListDOM, badgeFormDOM]) => {
-    return div([
-      label('Url:'),
-      input('.url', { props: { value: storedUrl } }),
-      hr(),
-      label('ReadKey:'),
-      input('.read-key'),
-      hr(),
-      label('WriteKey:'),
-      input('.write-key'),
-      hr(),
-      div([
-        badgeFormDOM,
-        badgeListDOM
-      ])
-    ])
+  const appSinks = app({
+    DOM: sources.DOM,
+    storedUrl$,
+    storedBadgeList$
   })
 
-  const storageUrlRequests$ = url$.map(url => ({
+  const storageUrlRequests$ = appSinks.url$.map(url => ({
     key: 'url',
     value: url
   }))
 
-  const storageBadgeListRequests$ = badgeList$.map(list => ({
+  const storageBadgeListRequests$ = appSinks.badges$.map(list => ({
     key: 'badges',
     value: JSON.stringify(list)
   }))
@@ -78,7 +35,7 @@ function main(sources) {
   const storageRequests$ = xs.merge(storageUrlRequests$, storageBadgeListRequests$)
 
   const sinks = {
-    DOM: vtree$,
+    DOM: appSinks.DOM,
     storage: storageRequests$
   }
 

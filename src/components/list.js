@@ -1,4 +1,6 @@
-import {a, ul, li} from '@cycle/dom'
+import xs from 'xstream'
+import {a, div, label, ul, li, button} from '@cycle/dom'
+import ControlledInput from './controlled_input'
 
 function badgeItem(badge) {
   const button = a('.remove', {attrs: {href: '#', 'data-badge': badge}}, ['Remove'])
@@ -6,9 +8,21 @@ function badgeItem(badge) {
 }
 
 function BadgeList(sources) {
-  const vtree$ = sources.dataSource$.map((badges) => {
+  const input = ControlledInput({
+    props: xs.of({className: 'name'}),
+    assign: sources.addBadge$.map(() => '')
+  })
+
+  const vtree$ = xs.combine(sources.dataSource$, input.DOM).map(([badges, inputDOM]) => {
     const lis = badges.map(badgeItem)
-    return ul(lis)
+    const list = ul(lis)
+
+    return div([
+      list,
+      label('Name:'),
+      inputDOM,
+      button('.create', 'Create'),
+    ])
   })
 
   return {
