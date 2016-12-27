@@ -9,31 +9,48 @@ import BadgeList from './components/list'
 function main(sources) {
   const storedUrl$ = sources.storage.local
     .getItem('url')
-    .take(1)
-    .startWith('')
+    .map(value => value || '')
 
   const storedBadgeList$ = sources.storage.local
     .getItem('badges')
     .take(1)
-    .startWith('')
     .map(value => value || '[]')
     .map(value => JSON.parse(value))
 
   const url$ = sources.DOM.select('.url').events('input').map(e => e.target.value)
+  const removeBadge$ = sources.DOM
+    .select('.remove')
+    .events('click')
+    .map((e) => e.preventDefault() || e)
+    .map((e) => e.target.getAttribute('data-badge'))
+    .map(badge => ({name: 'remove', value: badge}))
 
   const badgeForm = BadgeForm({DOM: sources.DOM})
 
-  const newBadgeList$ = badgeForm.newBadges$.fold((acc, value) => acc.concat(value), [])
-  const badgeList$ = xs.combine(storedBadgeList$, newBadgeList$).map(([storedBadges, newBadges]) => {
-    return storedBadges.concat(newBadges)
-  })
+  const addBadge$ = badgeForm.newBadges$.map(name => ({name: 'add', value: name}))
+
+  const badgeList$ = storedBadgeList$.map(storedList => {
+    return xs.merge(addBadge$, removeBadge$).startWith({}).fold((acc, action) => {
+      if (action.name === 'add') {
+        return acc.concat(action.value)
+      }
+
+      if (action.name === 'remove') {
+        return acc.filter(value => {
+          return value !== action.value
+        })
+      }
+
+      return acc
+    },storedList)
+  }).flatten()
 
   const badgeList = BadgeList({dataSource$: badgeList$})
 
   const vtree$ = xs.combine(storedUrl$, badgeList.DOM, badgeForm.DOM).map(([storedUrl, badgeListDOM, badgeFormDOM]) => {
     return div([
       label('Url:'),
-      input('.url', { props: { value: storedUrl}}),
+      input('.url', { props: { value: storedUrl } }),
       hr(),
       label('ReadKey:'),
       input('.read-key'),

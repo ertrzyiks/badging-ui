@@ -1,7 +1,8 @@
-import {ul, li} from '@cycle/dom'
+import {a, ul, li} from '@cycle/dom'
 
 function badgeItem(badge) {
-  return li(badge)
+  const button = a('.remove', {attrs: {href: '#', 'data-badge': badge}}, ['Remove'])
+  return li([badge, button])
 }
 
 function BadgeList(sources) {
